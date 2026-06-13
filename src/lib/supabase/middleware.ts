@@ -3,12 +3,19 @@ import { NextResponse, type NextRequest } from "next/server";
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 import type { Database } from "@/lib/types/database";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import {
+  getSupabaseAnonKey,
+  getSupabaseUrl,
+  isSupabaseConfigured,
+} from "@/lib/supabase/config";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
 const PUBLIC_ROUTES = ["/", "/login", "/signup", "/auth", "/api/health"];
 const AUTH_ROUTES = ["/login", "/signup"];
+
+/** Never call Supabase auth in middleware for these — keeps the landing page up. */
+const MIDDLEWARE_PASSTHROUGH = ["/", "/api/health"];
 
 function isPublic(pathname: string) {
   return PUBLIC_ROUTES.some(
@@ -16,81 +23,110 @@ function isPublic(pathname: string) {
   );
 }
 
+function isPassthrough(pathname: string) {
+  return MIDDLEWARE_PASSTHROUGH.some(
+    (route) => pathname === route || pathname.startsWith(`${route}/`),
+  );
+}
+
+function loginRedirect(request: NextRequest, redirectedFrom?: string) {
+  const url = request.nextUrl.clone();
+  url.pathname = "/login";
+  url.search = "";
+  if (redirectedFrom) {
+    url.searchParams.set("redirectedFrom", redirectedFrom);
+  }
+  return NextResponse.redirect(url);
+}
+
 /**
- * Refreshes the Supabase auth session on every request and enforces route
- * protection. Must run in middleware so Server Components always see a fresh
- * session cookie.
+ * Refreshes the Supabase auth session on protected routes and enforces route
+ * protection. Public pages like `/` skip Supabase entirely so a bad/missing
+ * env var cannot 500 the whole site on Vercel Edge.
  */
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
   const { pathname } = request.nextUrl;
 
-  // If Supabase isn't configured yet, keep the public site usable and send
-  // protected routes to /login (which shows a friendly setup notice) instead
-  // of letting them reach a server client that would throw.
-  if (!isSupabaseConfigured()) {
-    if (!isPublic(pathname)) {
-      const url = request.nextUrl.clone();
-      url.pathname = "/login";
-      url.search = "";
-      return NextResponse.redirect(url);
-    }
-    return response;
-  }
+  try {
+    let response = NextResponse.next({ request });
 
-  const supabase = createServerClient<Database>(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet: CookieToSet[]) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value),
-          );
-          response = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            response.cookies.set(name, value, options),
-          );
+    // Landing + health check must always load, even if Supabase auth fails.
+    if (isPassthrough(pathname)) {
+      return response;
+    }
+
+    if (!isSupabaseConfigured()) {
+      if (!isPublic(pathname)) {
+        return loginRedirect(request);
+      }
+      return response;
+    }
+
+    const supabaseUrl = getSupabaseUrl();
+    const supabaseAnonKey = getSupabaseAnonKey();
+    if (!supabaseUrl || !supabaseAnonKey) {
+      if (!isPublic(pathname)) {
+        return loginRedirect(request);
+      }
+      return response;
+    }
+
+    const supabase = createServerClient<Database>(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        cookies: {
+          getAll() {
+            return request.cookies.getAll();
+          },
+          setAll(
+            cookiesToSet: CookieToSet[],
+            headers?: Record<string, string>,
+          ) {
+            cookiesToSet.forEach(({ name, value }) =>
+              request.cookies.set(name, value),
+            );
+            response = NextResponse.next({ request });
+            cookiesToSet.forEach(({ name, value, options }) =>
+              response.cookies.set(name, value, options),
+            );
+            if (headers) {
+              Object.entries(headers).forEach(([key, value]) =>
+                response.headers.set(key, value),
+              );
+            }
+          },
         },
       },
-    },
-  );
+    );
 
-  // IMPORTANT: getUser() revalidates the token with Supabase Auth.
-  let user = null;
-  try {
-    const result = await supabase.auth.getUser();
-    user = result.data.user;
-  } catch {
-    // Bad/missing Supabase config or a transient auth error — don't crash
-    // middleware (which would 500 every route). Treat as logged-out.
-    if (!isPublic(pathname)) {
+    let user = null;
+    try {
+      const { data } = await supabase.auth.getUser();
+      user = data.user;
+    } catch {
+      if (!isPublic(pathname)) {
+        return loginRedirect(request);
+      }
+      return response;
+    }
+
+    if (!user && !isPublic(pathname)) {
+      return loginRedirect(request, pathname);
+    }
+
+    if (user && AUTH_ROUTES.includes(pathname)) {
       const url = request.nextUrl.clone();
-      url.pathname = "/login";
+      url.pathname = "/dashboard";
       url.search = "";
       return NextResponse.redirect(url);
     }
+
     return response;
+  } catch {
+    if (isPublic(pathname)) {
+      return NextResponse.next({ request });
+    }
+    return loginRedirect(request);
   }
-
-  // Unauthenticated user hitting a protected route → send to /login.
-  if (!user && !isPublic(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    url.searchParams.set("redirectedFrom", pathname);
-    return NextResponse.redirect(url);
-  }
-
-  // Authenticated user hitting login/signup → send to dashboard.
-  if (user && AUTH_ROUTES.includes(pathname)) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
-    url.search = "";
-    return NextResponse.redirect(url);
-  }
-
-  return response;
 }
