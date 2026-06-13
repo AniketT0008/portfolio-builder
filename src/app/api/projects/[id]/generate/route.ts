@@ -33,7 +33,7 @@ export async function POST(
 
   if (!isAIConfigured()) {
     return NextResponse.json(
-      { error: "AI is not configured. Set GEMINI_API_KEY on the server." },
+      { error: "AI is not configured. Set GEMINI_MODEL (your AIza API key) on the server." },
       { status: 503 },
     );
   }

@@ -66,7 +66,7 @@ cp .env.example .env.local
 NEXT_PUBLIC_SUPABASE_URL=https://<your-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
 SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
-GEMINI_API_KEY=<your-gemini-api-key>
+GEMINI_MODEL=<your-gemini-api-key>
 NEXT_PUBLIC_SITE_URL=http://localhost:3000
 # optional: raises GitHub API rate limits when ingesting public repos
 GITHUB_TOKEN=
@@ -174,7 +174,7 @@ supabase/migrations/0001_init.sql
   `user_id = auth.uid()`.
 - Storage objects live under `{user_id}/{project_id}/...` and are protected by
   storage policies keyed on the first path segment.
-- The `SUPABASE_SERVICE_ROLE_KEY` and `GEMINI_API_KEY` are **server-only** and
+- The `SUPABASE_SERVICE_ROLE_KEY` and `GEMINI_MODEL` are **server-only** and
   never shipped to the browser.
 
 ## License

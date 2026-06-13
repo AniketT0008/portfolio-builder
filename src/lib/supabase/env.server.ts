@@ -68,11 +68,9 @@ export function getServerSiteUrl(): string | undefined {
 }
 
 export function getServerGeminiKey(): string | undefined {
-  return firstEnv(
-    "GEMINI_API_KEY",
-    "GOOGLE_API_KEY",
-    "GOOGLE_GENERATIVE_AI_API_KEY",
-  );
+  // Primary env var name used in Vercel: GEMINI_MODEL (holds the AIza API key).
+  // GEMINI_API_KEY is kept as a fallback alias.
+  return firstEnv("GEMINI_MODEL", "GEMINI_API_KEY", "GOOGLE_API_KEY");
 }
 
 export function isServerSupabaseConfigured(): boolean {
@@ -93,9 +91,9 @@ export function getServerEnvDiagnostics() {
     "NEXT_PUBLIC_SUPABASE_PROJECT_URL",
   );
   const rawGemini = firstEnv(
+    "GEMINI_MODEL",
     "GEMINI_API_KEY",
     "GOOGLE_API_KEY",
-    "GOOGLE_GENERATIVE_AI_API_KEY",
   );
 
   return {
@@ -111,8 +109,8 @@ export function getServerEnvDiagnostics() {
       supabaseUrlLooksLikeHttp: rawUrl
         ? /^https?:\/\//i.test(rawUrl.trim())
         : false,
-      geminiKeyEnvPresent: Boolean(rawGemini),
-      geminiKeyRawLength: rawGemini?.length ?? 0,
+      geminiModelEnvPresent: Boolean(rawGemini),
+      geminiModelRawLength: rawGemini?.length ?? 0,
     },
   };
 }

@@ -19,7 +19,7 @@ export function getAIClient() {
   const apiKey = getServerGeminiKey();
   if (!apiKey) {
     throw new Error(
-      "GEMINI_API_KEY is not configured. Add it to your environment to enable AI features.",
+      "GEMINI_MODEL is not configured. Add your Gemini API key (AIza...) to GEMINI_MODEL in Vercel.",
     );
   }
   if (!_client) {
@@ -30,7 +30,7 @@ export function getAIClient() {
 
 export const MODELS = {
   /** Fast + free-tier friendly. Used for most generations. */
-  default: process.env.GEMINI_MODEL || "gemini-2.5-flash",
+  default: process.env.GEMINI_MODEL_NAME || "gemini-2.5-flash",
   /** Higher quality. Used for analysis + long-form outputs. */
   heavy: process.env.GEMINI_MODEL_HEAVY || "gemini-2.5-flash",
 } as const;
