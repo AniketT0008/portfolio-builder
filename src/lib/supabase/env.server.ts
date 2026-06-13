@@ -103,12 +103,13 @@ export function getServerEnvDiagnostics() {
     hasGeminiKey: isServerAIConfigured(),
     hasSiteUrl: Boolean(getServerSiteUrl()),
     debug: {
-      // Helps tell "missing from Vercel" vs "set but wrong format"
+      // Raw env value in Vercel (may be project ref only, e.g. lptkjqaolnynnuxhxokz)
       supabaseUrlEnvPresent: Boolean(rawUrl),
       supabaseUrlRawLength: rawUrl?.length ?? 0,
-      supabaseUrlLooksLikeHttp: rawUrl
+      supabaseUrlRawHasHttpPrefix: rawUrl
         ? /^https?:\/\//i.test(rawUrl.trim())
         : false,
+      supabaseUrlNormalized: Boolean(url),
       geminiModelEnvPresent: Boolean(rawGemini),
       geminiModelRawLength: rawGemini?.length ?? 0,
     },
