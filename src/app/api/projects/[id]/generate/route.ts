@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 import { runGeneration } from "@/lib/ai/engine";
 import { extractedDataSchema } from "@/lib/ai/types";
-import { isOpenAIConfigured } from "@/lib/openai/client";
+import { isAIConfigured } from "@/lib/ai/client";
 import { createClient } from "@/lib/supabase/server";
 import { isSupabaseConfigured } from "@/lib/supabase/config";
 import type { GenerationSettings } from "@/lib/constants";
@@ -31,9 +31,9 @@ export async function POST(
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  if (!isOpenAIConfigured()) {
+  if (!isAIConfigured()) {
     return NextResponse.json(
-      { error: "AI is not configured. Set OPENAI_API_KEY on the server." },
+      { error: "AI is not configured. Set GEMINI_API_KEY on the server." },
       { status: 503 },
     );
   }

@@ -1,6 +1,6 @@
 import type { GenerationSettings } from "@/lib/constants";
 import type { GenerationType } from "@/lib/types/database";
-import { getOpenAI, MODELS } from "@/lib/openai/client";
+import { getAIClient, MODELS } from "@/lib/ai/client";
 import {
   ANALYSIS_SYSTEM,
   buildAnalysisUserPrompt,
@@ -35,7 +35,7 @@ function safeParseJson(raw: string): unknown {
 export async function analyzeProjectContext(
   context: string,
 ): Promise<ExtractedData> {
-  const client = getOpenAI();
+  const client = getAIClient();
   const completion = await client.chat.completions.create({
     model: MODELS.heavy,
     temperature: 0.3,
@@ -67,7 +67,7 @@ export async function runGeneration(
   data: ExtractedData,
   settings: GenerationSettings,
 ): Promise<GenerationContent> {
-  const client = getOpenAI();
+  const client = getAIClient();
   const { system, user } = buildGenerationMessages(type, data, settings);
 
   // Long-form types benefit from the stronger model.
