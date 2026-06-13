@@ -60,9 +60,21 @@ export async function updateSession(request: NextRequest) {
   );
 
   // IMPORTANT: getUser() revalidates the token with Supabase Auth.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const result = await supabase.auth.getUser();
+    user = result.data.user;
+  } catch {
+    // Bad/missing Supabase config or a transient auth error — don't crash
+    // middleware (which would 500 every route). Treat as logged-out.
+    if (!isPublic(pathname)) {
+      const url = request.nextUrl.clone();
+      url.pathname = "/login";
+      url.search = "";
+      return NextResponse.redirect(url);
+    }
+    return response;
+  }
 
   // Unauthenticated user hitting a protected route → send to /login.
   if (!user && !isPublic(pathname)) {
