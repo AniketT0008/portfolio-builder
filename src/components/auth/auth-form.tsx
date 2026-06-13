@@ -11,18 +11,23 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isSupabaseConfigured, getSiteUrl } from "@/lib/supabase/config";
 
 type Mode = "login" | "signup";
 
 export function AuthForm({ mode }: { mode: Mode }) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const configured = isSupabaseConfigured();
+  const [configured, setConfigured] = React.useState(false);
   const supabase = React.useMemo(
     () => (configured ? createClient() : null),
     [configured],
   );
+
+  // Read runtime-injected public env after mount (Vercel may add vars after build).
+  React.useEffect(() => {
+    setConfigured(isSupabaseConfigured());
+  }, []);
 
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
@@ -39,7 +44,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
   }, [searchParams]);
 
   const siteUrl =
-    process.env.NEXT_PUBLIC_SITE_URL ||
+    getSiteUrl() ||
     (typeof window !== "undefined" ? window.location.origin : "");
 
   async function handleEmail(e: React.FormEvent) {
@@ -133,10 +138,11 @@ export function AuthForm({ mode }: { mode: Mode }) {
               Supabase isn&apos;t connected yet
             </p>
             <p className="text-muted-foreground">
-              Add <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-              <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-              <code className="text-xs">.env.local</code> and restart the dev
-              server to enable sign-in. See the README for setup.
+              Add{" "}
+              <code className="text-xs">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+              <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in
+              Vercel → Settings → Environment Variables, then redeploy. See the
+              README for setup.
             </p>
           </div>
         </div>

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 
 import { ThemeProvider } from "@/components/theme-provider";
+import { PublicRuntimeEnv } from "@/components/public-runtime-env";
 import { Toaster } from "@/components/ui/sonner";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
@@ -60,6 +61,7 @@ export default function RootLayout({
       <body
         className={`${inter.variable} ${jetbrainsMono.variable} font-sans`}
       >
+        <PublicRuntimeEnv />
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"
