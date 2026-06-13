@@ -1,0 +1,159 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 224 71% 4%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 224 71% 4%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 224 71% 4%;
+
+    --primary: 256 90% 58%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 224 71% 4%;
+
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
+
+    --accent: 256 90% 96%;
+    --accent-foreground: 256 80% 30%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 256 90% 58%;
+
+    --radius: 0.75rem;
+  }
+
+  .dark {
+    --background: 224 71% 4%;
+    --foreground: 210 20% 98%;
+
+    --card: 224 50% 7%;
+    --card-foreground: 210 20% 98%;
+
+    --popover: 224 50% 7%;
+    --popover-foreground: 210 20% 98%;
+
+    --primary: 256 90% 66%;
+    --primary-foreground: 224 71% 4%;
+
+    --secondary: 215 28% 14%;
+    --secondary-foreground: 210 20% 98%;
+
+    --muted: 215 28% 14%;
+    --muted-foreground: 217 11% 65%;
+
+    --accent: 256 50% 20%;
+    --accent-foreground: 210 20% 98%;
+
+    --destructive: 0 63% 49%;
+    --destructive-foreground: 210 20% 98%;
+
+    --border: 215 28% 17%;
+    --input: 215 28% 17%;
+    --ring: 256 90% 66%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+    font-feature-settings: "rlig" 1, "calt" 1;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary via-violet-500 to-fuchsia-500 bg-clip-text text-transparent;
+  }
+  .bg-grid {
+    background-image: linear-gradient(
+        to right,
+        hsl(var(--border) / 0.4) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, hsl(var(--border) / 0.4) 1px, transparent 1px);
+    background-size: 56px 56px;
+  }
+  .glass {
+    @apply bg-background/70 backdrop-blur-lg;
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: hsl(var(--border));
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: hsl(var(--muted-foreground) / 0.5);
+}
+
+/* Markdown rendering (prose-like, no plugin dependency) */
+.markdown-body {
+  @apply text-sm leading-relaxed text-foreground;
+}
+.markdown-body h1 {
+  @apply mb-3 mt-6 text-2xl font-bold tracking-tight;
+}
+.markdown-body h2 {
+  @apply mb-2 mt-5 text-xl font-semibold tracking-tight;
+}
+.markdown-body h3 {
+  @apply mb-2 mt-4 text-lg font-semibold;
+}
+.markdown-body p {
+  @apply mb-3;
+}
+.markdown-body ul {
+  @apply mb-3 ml-5 list-disc space-y-1;
+}
+.markdown-body ol {
+  @apply mb-3 ml-5 list-decimal space-y-1;
+}
+.markdown-body a {
+  @apply font-medium text-primary underline underline-offset-4;
+}
+.markdown-body code {
+  @apply rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em];
+}
+.markdown-body pre {
+  @apply mb-4 overflow-x-auto rounded-lg bg-muted p-4;
+}
+.markdown-body pre code {
+  @apply bg-transparent p-0;
+}
+.markdown-body blockquote {
+  @apply border-l-2 border-primary/50 pl-4 italic text-muted-foreground;
+}
+.markdown-body table {
+  @apply mb-4 w-full border-collapse text-left text-sm;
+}
+.markdown-body th,
+.markdown-body td {
+  @apply border border-border px-3 py-2;
+}
+.markdown-body hr {
+  @apply my-6 border-border;
+}
