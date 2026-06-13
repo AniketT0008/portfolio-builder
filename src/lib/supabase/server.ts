@@ -2,7 +2,10 @@ import { cookies } from "next/headers";
 
 import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
+import {
+  getServerSupabaseAnonKey,
+  getServerSupabaseUrl,
+} from "@/lib/supabase/env.server";
 import type { Database } from "@/lib/types/database";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
@@ -15,8 +18,8 @@ export function createClient() {
   const cookieStore = cookies();
 
   return createServerClient<Database>(
-    getSupabaseUrl()!,
-    getSupabaseAnonKey()!,
+    getServerSupabaseUrl()!,
+    getServerSupabaseAnonKey()!,
     {
       cookies: {
         getAll() {
@@ -44,7 +47,7 @@ export function createClient() {
 export function createServiceClient() {
   const cookieStore = cookies();
   return createServerClient<Database>(
-    getSupabaseUrl()!,
+    getServerSupabaseUrl()!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
     {
       cookies: {

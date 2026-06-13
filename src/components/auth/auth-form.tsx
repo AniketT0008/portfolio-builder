@@ -15,19 +15,25 @@ import { isSupabaseConfigured, getSiteUrl } from "@/lib/supabase/config";
 
 type Mode = "login" | "signup";
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({
+  mode,
+  initialConfigured = false,
+}: {
+  mode: Mode;
+  initialConfigured?: boolean;
+}) {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [configured, setConfigured] = React.useState(false);
+  const [configured, setConfigured] = React.useState(initialConfigured);
   const supabase = React.useMemo(
     () => (configured ? createClient() : null),
     [configured],
   );
 
-  // Read runtime-injected public env after mount (Vercel may add vars after build).
+  // Re-check runtime-injected public env after mount (Vercel may add vars after build).
   React.useEffect(() => {
     setConfigured(isSupabaseConfigured());
-  }, []);
+  }, [initialConfigured]);
 
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");

@@ -1,15 +1,16 @@
 import { NextResponse } from "next/server";
 
-import { isAIConfigured } from "@/lib/ai/client";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isServerAIConfigured, isServerSupabaseConfigured, getServerEnvDiagnostics } from "@/lib/supabase/env.server";
 
 export const dynamic = "force-dynamic";
 
 export function GET() {
+  const checks = getServerEnvDiagnostics();
   return NextResponse.json({
     status: "ok",
-    ai: isAIConfigured(),
-    supabase: isSupabaseConfigured(),
+    ai: isServerAIConfigured(),
+    supabase: isServerSupabaseConfigured(),
+    checks,
     time: new Date().toISOString(),
   });
 }

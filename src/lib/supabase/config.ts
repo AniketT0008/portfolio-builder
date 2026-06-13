@@ -13,12 +13,24 @@ declare global {
   }
 }
 
+function cleanEnvValue(value: string | undefined): string | undefined {
+  if (!value) return undefined;
+  let v = value.trim();
+  if (
+    (v.startsWith('"') && v.endsWith('"')) ||
+    (v.startsWith("'") && v.endsWith("'"))
+  ) {
+    v = v.slice(1, -1).trim();
+  }
+  return v || undefined;
+}
+
 function readPublicEnv(name: string): string | undefined {
-  const fromProcess = process.env[name]?.trim();
+  const fromProcess = cleanEnvValue(process.env[name]);
   if (fromProcess) return fromProcess;
 
   if (typeof window !== "undefined") {
-    const fromRuntime = window.__NEXT_PUBLIC_ENV__?.[name]?.trim();
+    const fromRuntime = cleanEnvValue(window.__NEXT_PUBLIC_ENV__?.[name]);
     if (fromRuntime) return fromRuntime;
   }
 

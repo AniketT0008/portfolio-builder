@@ -1,6 +1,14 @@
 import { NextResponse } from "next/server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getServerSiteUrl } from "@/lib/supabase/env.server";
+
+function safeRedirectPath(next: string | null): string {
+  if (!next || !next.startsWith("/") || next.startsWith("//")) {
+    return "/dashboard";
+  }
+  return next;
+}
 
 /**
  * OAuth + email-confirmation callback. Exchanges the `code` for a session,
@@ -9,7 +17,8 @@ import { createClient } from "@/lib/supabase/server";
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const next = searchParams.get("next") ?? "/dashboard";
+  const next = safeRedirectPath(searchParams.get("next"));
+  const siteUrl = getServerSiteUrl();
 
   if (code) {
     const supabase = createClient();
@@ -21,6 +30,9 @@ export async function GET(request: Request) {
       if (isLocal) {
         return NextResponse.redirect(`${origin}${next}`);
       }
+      if (siteUrl) {
+        return NextResponse.redirect(`${siteUrl}${next}`);
+      }
       if (forwardedHost) {
         return NextResponse.redirect(`https://${forwardedHost}${next}`);
       }
@@ -28,7 +40,8 @@ export async function GET(request: Request) {
     }
   }
 
+  const errorBase = siteUrl || origin;
   return NextResponse.redirect(
-    `${origin}/login?error=Could not sign you in. Please try again.`,
+    `${errorBase}/login?error=${encodeURIComponent("Could not sign you in. Please try again.")}`,
   );
 }

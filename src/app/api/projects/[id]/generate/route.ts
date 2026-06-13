@@ -4,7 +4,7 @@ import { runGeneration } from "@/lib/ai/engine";
 import { extractedDataSchema } from "@/lib/ai/types";
 import { isAIConfigured } from "@/lib/ai/client";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isServerSupabaseConfigured } from "@/lib/supabase/env.server";
 import type { GenerationSettings } from "@/lib/constants";
 import type { Generation, Json, Project } from "@/lib/types/database";
 import { generationRequestSchema } from "@/lib/validation";
@@ -16,7 +16,7 @@ export async function POST(
   request: Request,
   { params }: { params: { id: string } },
 ) {
-  if (!isSupabaseConfigured()) {
+  if (!isServerSupabaseConfigured()) {
     return NextResponse.json(
       { error: "Supabase is not configured on the server." },
       { status: 503 },

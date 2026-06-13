@@ -1,12 +1,12 @@
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isServerSupabaseConfigured } from "@/lib/supabase/env.server";
 import type { Profile } from "@/lib/types/database";
 
 /** Returns the current user or null. Does not redirect. */
 export async function getUser() {
-  if (!isSupabaseConfigured()) return null;
+  if (!isServerSupabaseConfigured()) return null;
   const supabase = createClient();
   const {
     data: { user },
@@ -16,7 +16,7 @@ export async function getUser() {
 
 /** Returns the current user + profile, or redirects to /login. */
 export async function requireUser() {
-  if (!isSupabaseConfigured()) redirect("/login");
+  if (!isServerSupabaseConfigured()) redirect("/login");
   const supabase = createClient();
   const {
     data: { user },

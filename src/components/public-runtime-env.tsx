@@ -1,4 +1,4 @@
-import { getSupabaseAnonKey, getSupabaseUrl } from "@/lib/supabase/config";
+import { getServerSupabaseAnonKey, getServerSupabaseUrl, getServerSiteUrl } from "@/lib/supabase/env.server";
 
 declare global {
   interface Window {
@@ -14,9 +14,9 @@ declare global {
 export function PublicRuntimeEnv() {
   const payload: Record<string, string> = {};
 
-  const supabaseUrl = getSupabaseUrl();
-  const supabaseAnonKey = getSupabaseAnonKey();
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  const supabaseUrl = getServerSupabaseUrl();
+  const supabaseAnonKey = getServerSupabaseAnonKey();
+  const siteUrl = getServerSiteUrl();
 
   if (supabaseUrl) payload.NEXT_PUBLIC_SUPABASE_URL = supabaseUrl;
   if (supabaseAnonKey) payload.NEXT_PUBLIC_SUPABASE_ANON_KEY = supabaseAnonKey;

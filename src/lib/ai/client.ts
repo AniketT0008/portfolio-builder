@@ -1,5 +1,7 @@
 import OpenAI from "openai";
 
+import { getServerGeminiKey, isServerAIConfigured } from "@/lib/supabase/env.server";
+
 /**
  * Google Gemini exposes an OpenAI-compatible REST surface, so we keep using the
  * `openai` SDK and simply point it at Gemini's endpoint. This lets the rest of
@@ -14,7 +16,7 @@ let _client: OpenAI | null = null;
 
 /** Lazily instantiate the AI client so the app builds without a key set. */
 export function getAIClient() {
-  const apiKey = process.env.GEMINI_API_KEY;
+  const apiKey = getServerGeminiKey();
   if (!apiKey) {
     throw new Error(
       "GEMINI_API_KEY is not configured. Add it to your environment to enable AI features.",
@@ -34,5 +36,5 @@ export const MODELS = {
 } as const;
 
 export function isAIConfigured() {
-  return Boolean(process.env.GEMINI_API_KEY);
+  return isServerAIConfigured();
 }

@@ -15,6 +15,7 @@ create extension if not exists "pgcrypto";      -- gen_random_uuid()
 create or replace function public.set_updated_at()
 returns trigger
 language plpgsql
+set search_path = public
 as $$
 begin
   new.updated_at = now();
@@ -146,6 +147,9 @@ begin
   return new;
 end;
 $$;
+
+revoke all on function public.handle_new_user() from public;
+revoke all on function public.handle_new_user() from anon, authenticated;
 
 drop trigger if exists on_auth_user_created on auth.users;
 create trigger on_auth_user_created

@@ -4,10 +4,10 @@ import { createServerClient, type CookieOptions } from "@supabase/ssr";
 
 import type { Database } from "@/lib/types/database";
 import {
-  getSupabaseAnonKey,
-  getSupabaseUrl,
-  isSupabaseConfigured,
-} from "@/lib/supabase/config";
+  getServerSupabaseAnonKey,
+  getServerSupabaseUrl,
+  isServerSupabaseConfigured,
+} from "@/lib/supabase/env.server";
 
 type CookieToSet = { name: string; value: string; options: CookieOptions };
 
@@ -55,15 +55,15 @@ export async function updateSession(request: NextRequest) {
       return response;
     }
 
-    if (!isSupabaseConfigured()) {
+    if (!isServerSupabaseConfigured()) {
       if (!isPublic(pathname)) {
         return loginRedirect(request);
       }
       return response;
     }
 
-    const supabaseUrl = getSupabaseUrl();
-    const supabaseAnonKey = getSupabaseAnonKey();
+    const supabaseUrl = getServerSupabaseUrl();
+    const supabaseAnonKey = getServerSupabaseAnonKey();
     if (!supabaseUrl || !supabaseAnonKey) {
       if (!isPublic(pathname)) {
         return loginRedirect(request);

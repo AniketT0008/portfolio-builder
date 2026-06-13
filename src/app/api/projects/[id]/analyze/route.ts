@@ -4,7 +4,7 @@ import { analyzeProjectContext } from "@/lib/ai/engine";
 import { buildProjectContext } from "@/lib/ai/extract";
 import { isAIConfigured } from "@/lib/ai/client";
 import { createClient } from "@/lib/supabase/server";
-import { isSupabaseConfigured } from "@/lib/supabase/config";
+import { isServerSupabaseConfigured } from "@/lib/supabase/env.server";
 import type { Artifact, Json, Project } from "@/lib/types/database";
 
 export const maxDuration = 60;
@@ -14,7 +14,7 @@ export async function POST(
   _request: Request,
   { params }: { params: { id: string } },
 ) {
-  if (!isSupabaseConfigured()) {
+  if (!isServerSupabaseConfigured()) {
     return NextResponse.json(
       { error: "Supabase is not configured on the server." },
       { status: 503 },
