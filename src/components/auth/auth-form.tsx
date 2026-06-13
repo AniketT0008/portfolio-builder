@@ -11,7 +11,11 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { createClient } from "@/lib/supabase/client";
-import { isSupabaseConfigured, getSiteUrl } from "@/lib/supabase/config";
+import {
+  isSupabaseConfigured,
+  isAnonKeyMisconfigured,
+  getSiteUrl,
+} from "@/lib/supabase/config";
 
 type Mode = "login" | "signup";
 
@@ -136,7 +140,26 @@ export function AuthForm({
         </p>
       </div>
 
-      {!configured && (
+      {!configured && isAnonKeyMisconfigured() && (
+        <div className="flex gap-3 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <div className="space-y-1">
+            <p className="font-medium text-red-600 dark:text-red-400">
+              Wrong Supabase anon key
+            </p>
+            <p className="text-muted-foreground">
+              <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> is
+              set to your project URL — it must be the{" "}
+              <strong>anon public</strong> JWT key from Supabase → Settings →
+              API Keys → Legacy tab (starts with{" "}
+              <code className="text-xs">eyJ...</code>). Fix in Vercel and
+              redeploy.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {!configured && !isAnonKeyMisconfigured() && (
         <div className="flex gap-3 rounded-lg border border-amber-500/40 bg-amber-500/10 p-3 text-sm">
           <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />
           <div className="space-y-1">

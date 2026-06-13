@@ -3,18 +3,12 @@
  * import this file from Client Components.
  */
 
-function cleanEnvValue(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  // Remove BOM / zero-width chars sometimes pasted from docs.
-  let v = value.replace(/^\uFEFF/, "").trim();
-  if (
-    (v.startsWith('"') && v.endsWith('"')) ||
-    (v.startsWith("'") && v.endsWith("'"))
-  ) {
-    v = v.slice(1, -1).trim();
-  }
-  return v || undefined;
-}
+import {
+  cleanEnvValue,
+  normalizeSupabaseUrl,
+  sanitizeSupabaseAnonKey,
+  isValidSupabaseAnonKey,
+} from "@/lib/supabase/env-shared";
 
 function firstEnv(...names: string[]): string | undefined {
   for (const name of names) {
@@ -24,43 +18,26 @@ function firstEnv(...names: string[]): string | undefined {
   return undefined;
 }
 
-/** Accept full URL, host-only, or bare project ref. */
-function normalizeSupabaseUrl(raw: string | undefined): string | undefined {
-  const v = cleanEnvValue(raw);
-  if (!v) return undefined;
-
-  let url = v;
-  if (!/^https?:\/\//i.test(url)) {
-    if (url.includes(".supabase.co")) {
-      url = `https://${url.replace(/^\/+/, "")}`;
-    } else if (/^[a-z0-9-]+$/i.test(url)) {
-      url = `https://${url}.supabase.co`;
-    } else {
-      return undefined;
-    }
-  }
-
-  if (!/^https?:\/\//i.test(url)) return undefined;
-  return url;
+function rawSupabaseAnonKey(): string | undefined {
+  return firstEnv(
+    "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+    "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+    "SUPABASE_ANON_KEY",
+  );
 }
 
 export function getServerSupabaseUrl(): string | undefined {
-  const raw = firstEnv(
-    "NEXT_PUBLIC_SUPABASE_URL",
-    "SUPABASE_URL",
-    "NEXT_PUBLIC_SUPABASE_PROJECT_URL",
+  return normalizeSupabaseUrl(
+    firstEnv(
+      "NEXT_PUBLIC_SUPABASE_URL",
+      "SUPABASE_URL",
+      "NEXT_PUBLIC_SUPABASE_PROJECT_URL",
+    ),
   );
-  return normalizeSupabaseUrl(raw);
 }
 
 export function getServerSupabaseAnonKey(): string | undefined {
-  return (
-    firstEnv(
-      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
-      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
-      "SUPABASE_ANON_KEY",
-    ) || undefined
-  );
+  return sanitizeSupabaseAnonKey(rawSupabaseAnonKey());
 }
 
 export function getServerSiteUrl(): string | undefined {
@@ -68,8 +45,6 @@ export function getServerSiteUrl(): string | undefined {
 }
 
 export function getServerGeminiKey(): string | undefined {
-  // Primary env var name used in Vercel: GEMINI_MODEL (holds the AIza API key).
-  // GEMINI_API_KEY is kept as a fallback alias.
   return firstEnv("GEMINI_MODEL", "GEMINI_API_KEY", "GOOGLE_API_KEY");
 }
 
@@ -81,6 +56,11 @@ export function isServerAIConfigured(): boolean {
   return Boolean(getServerGeminiKey());
 }
 
+export function isServerAnonKeyMisconfigured(): boolean {
+  const raw = rawSupabaseAnonKey();
+  return Boolean(raw && !isValidSupabaseAnonKey(raw));
+}
+
 /** Safe diagnostics for /api/health — never returns secret values. */
 export function getServerEnvDiagnostics() {
   const url = getServerSupabaseUrl();
@@ -90,6 +70,7 @@ export function getServerEnvDiagnostics() {
     "SUPABASE_URL",
     "NEXT_PUBLIC_SUPABASE_PROJECT_URL",
   );
+  const rawAnon = rawSupabaseAnonKey();
   const rawGemini = firstEnv(
     "GEMINI_MODEL",
     "GEMINI_API_KEY",
@@ -102,14 +83,18 @@ export function getServerEnvDiagnostics() {
     supabaseUrlHost: url ? safeHost(url) : null,
     hasGeminiKey: isServerAIConfigured(),
     hasSiteUrl: Boolean(getServerSiteUrl()),
+    anonKeyMisconfigured: isServerAnonKeyMisconfigured(),
     debug: {
-      // Raw env value in Vercel (may be project ref only, e.g. lptkjqaolnynnuxhxokz)
       supabaseUrlEnvPresent: Boolean(rawUrl),
       supabaseUrlRawLength: rawUrl?.length ?? 0,
       supabaseUrlRawHasHttpPrefix: rawUrl
         ? /^https?:\/\//i.test(rawUrl.trim())
         : false,
       supabaseUrlNormalized: Boolean(url),
+      anonKeyEnvPresent: Boolean(rawAnon),
+      anonKeyLooksLikeUrl: rawAnon
+        ? /^https?:\/\//i.test(rawAnon) || rawAnon.includes(".supabase.co")
+        : false,
       geminiModelEnvPresent: Boolean(rawGemini),
       geminiModelRawLength: rawGemini?.length ?? 0,
     },
