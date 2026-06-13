@@ -5,8 +5,8 @@
 
 function cleanEnvValue(value: string | undefined): string | undefined {
   if (!value) return undefined;
-  let v = value.trim();
-  // Strip accidental wrapping quotes pasted from docs or dashboards.
+  // Remove BOM / zero-width chars sometimes pasted from docs.
+  let v = value.replace(/^\uFEFF/, "").trim();
   if (
     (v.startsWith('"') && v.endsWith('"')) ||
     (v.startsWith("'") && v.endsWith("'"))
@@ -16,26 +16,63 @@ function cleanEnvValue(value: string | undefined): string | undefined {
   return v || undefined;
 }
 
-export function getServerSupabaseUrl(): string | undefined {
-  const url = cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_URL);
-  if (!url || !url.startsWith("http")) return undefined;
+function firstEnv(...names: string[]): string | undefined {
+  for (const name of names) {
+    const v = cleanEnvValue(process.env[name]);
+    if (v) return v;
+  }
+  return undefined;
+}
+
+/** Accept full URL, host-only, or bare project ref. */
+function normalizeSupabaseUrl(raw: string | undefined): string | undefined {
+  const v = cleanEnvValue(raw);
+  if (!v) return undefined;
+
+  let url = v;
+  if (!/^https?:\/\//i.test(url)) {
+    if (url.includes(".supabase.co")) {
+      url = `https://${url.replace(/^\/+/, "")}`;
+    } else if (/^[a-z0-9-]+$/i.test(url)) {
+      url = `https://${url}.supabase.co`;
+    } else {
+      return undefined;
+    }
+  }
+
+  if (!/^https?:\/\//i.test(url)) return undefined;
   return url;
+}
+
+export function getServerSupabaseUrl(): string | undefined {
+  const raw = firstEnv(
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_PROJECT_URL",
+  );
+  return normalizeSupabaseUrl(raw);
 }
 
 export function getServerSupabaseAnonKey(): string | undefined {
   return (
-    cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY) ||
-    cleanEnvValue(process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY) ||
-    undefined
+    firstEnv(
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+      "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY",
+      "SUPABASE_ANON_KEY",
+    ) || undefined
   );
 }
 
 export function getServerSiteUrl(): string | undefined {
-  return cleanEnvValue(process.env.NEXT_PUBLIC_SITE_URL);
+  return firstEnv("NEXT_PUBLIC_SITE_URL", "SITE_URL");
 }
 
 export function getServerGeminiKey(): string | undefined {
-  return cleanEnvValue(process.env.GEMINI_API_KEY);
+  return firstEnv(
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+  );
 }
 
 export function isServerSupabaseConfigured(): boolean {
@@ -50,12 +87,33 @@ export function isServerAIConfigured(): boolean {
 export function getServerEnvDiagnostics() {
   const url = getServerSupabaseUrl();
   const anon = getServerSupabaseAnonKey();
+  const rawUrl = firstEnv(
+    "NEXT_PUBLIC_SUPABASE_URL",
+    "SUPABASE_URL",
+    "NEXT_PUBLIC_SUPABASE_PROJECT_URL",
+  );
+  const rawGemini = firstEnv(
+    "GEMINI_API_KEY",
+    "GOOGLE_API_KEY",
+    "GOOGLE_GENERATIVE_AI_API_KEY",
+  );
+
   return {
     hasSupabaseUrl: Boolean(url),
     hasSupabaseAnonKey: Boolean(anon),
     supabaseUrlHost: url ? safeHost(url) : null,
     hasGeminiKey: isServerAIConfigured(),
     hasSiteUrl: Boolean(getServerSiteUrl()),
+    debug: {
+      // Helps tell "missing from Vercel" vs "set but wrong format"
+      supabaseUrlEnvPresent: Boolean(rawUrl),
+      supabaseUrlRawLength: rawUrl?.length ?? 0,
+      supabaseUrlLooksLikeHttp: rawUrl
+        ? /^https?:\/\//i.test(rawUrl.trim())
+        : false,
+      geminiKeyEnvPresent: Boolean(rawGemini),
+      geminiKeyRawLength: rawGemini?.length ?? 0,
+    },
   };
 }
 
