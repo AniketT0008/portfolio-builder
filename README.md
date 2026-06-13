@@ -1,4 +1,4 @@
-# ProjectPortfolio AI
+# ProjectPortfolio
 
 **Turn raw project artifacts into polished, professional outputs with AI.**
 
