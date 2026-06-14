@@ -134,6 +134,94 @@ export const GENERATION_CATALOG: GenerationMeta[] = [
     format: "markdown",
     accent: "from-green-500 to-emerald-600",
   },
+  {
+    type: "skills_extraction",
+    label: "Technical Skills Extraction",
+    short: "Skills Map",
+    description:
+      "Structured skills by language, framework, cloud, and concepts — ready for résumé and LinkedIn.",
+    icon: "Layers",
+    category: "career",
+    format: "sections",
+    accent: "from-indigo-500 to-blue-600",
+  },
+  {
+    type: "impact_score",
+    label: "Project Impact Score",
+    short: "Impact Score",
+    description:
+      "Scores complexity, depth, leadership, innovation, and impact — with an internship readiness verdict.",
+    icon: "Gauge",
+    category: "career",
+    format: "sections",
+    accent: "from-orange-500 to-red-500",
+  },
+  {
+    type: "interview_questions",
+    label: "Interview Question Bank",
+    short: "Interview Q&A",
+    description:
+      "Behavioral, technical, and follow-up questions with suggested answers for this project.",
+    icon: "MessageCircleQuestion",
+    category: "career",
+    format: "sections",
+    accent: "from-violet-500 to-indigo-600",
+  },
+  {
+    type: "recruiter_review",
+    label: "Recruiter Mode",
+    short: "Recruiter View",
+    description:
+      "What a recruiter would think — strengths, weaknesses, missing metrics, and fixes.",
+    icon: "ScanSearch",
+    category: "career",
+    format: "sections",
+    accent: "from-rose-500 to-orange-500",
+  },
+  {
+    type: "achievement_quantifier",
+    label: "Achievement Quantifier",
+    short: "Quantify",
+    description:
+      "Rewrites vague bullets into impact-driven statements with suggested metrics to confirm.",
+    icon: "TrendingUp",
+    category: "career",
+    format: "bullets",
+    accent: "from-emerald-500 to-green-600",
+  },
+  {
+    type: "hackathon_submission",
+    label: "Hackathon / Devpost Write-up",
+    short: "Devpost",
+    description:
+      "Problem, solution, tech, challenges, accomplishments, and future work for hackathon submissions.",
+    icon: "Trophy",
+    category: "applications",
+    format: "sections",
+    accent: "from-yellow-500 to-amber-600",
+  },
+  {
+    type: "college_activity",
+    label: "College Application Activity",
+    short: "College App",
+    description:
+      "Common App activities, UC entries, and supplementary responses from this project.",
+    icon: "School",
+    category: "applications",
+    format: "sections",
+    accent: "from-blue-500 to-cyan-500",
+  },
+  {
+    type: "project_timeline",
+    label: "Project Timeline",
+    short: "Timeline",
+    description:
+      "Ideation → planning → development → testing → deployment for presentations and notebooks.",
+    icon: "GitBranch",
+    category: "writeups",
+    format: "sections",
+    accent: "from-slate-500 to-zinc-600",
+  },
 ];
 
 export const GENERATION_MAP: Record<GenerationType, GenerationMeta> =

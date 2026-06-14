@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   Download,
+  FileText,
   FolderKanban,
   LayoutDashboard,
   Plus,
@@ -20,6 +21,7 @@ const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
   { href: "/import", label: "Import Hub", icon: Download },
   { href: "/code-studio", label: "Code Studio", icon: Wand2 },
+  { href: "/resume-builder", label: "Resume Builder", icon: FileText },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/library", label: "Library", icon: Star },
   { href: "/settings", label: "Settings", icon: Settings },

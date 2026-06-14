@@ -49,7 +49,15 @@ export type GenerationType =
   | "tech_docs"
   | "cover_letter"
   | "scholarship_app"
-  | "architecture_overview";
+  | "architecture_overview"
+  | "skills_extraction"
+  | "impact_score"
+  | "interview_questions"
+  | "recruiter_review"
+  | "achievement_quantifier"
+  | "hackathon_submission"
+  | "college_activity"
+  | "project_timeline";
 
 export interface Database {
   public: {

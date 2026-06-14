@@ -190,6 +190,77 @@ Return JSON: { "title": string, "mermaid": string, "markdown": string }
 - "mermaid" = a valid Mermaid 'graph TD' (or 'flowchart TD') diagram of the main components and their relationships. Use simple node ids and quoted labels. Do NOT include the \`\`\`mermaid fence in this field.
 - "markdown" = a written architecture overview that ALSO embeds the diagram inside a \`\`\`mermaid fenced code block, followed by prose describing components, data flow, and key design decisions.`,
   },
+  skills_extraction: {
+    system:
+      "You are a technical recruiter who maps projects to structured skill taxonomies for ATS and LinkedIn.",
+    instructions: `Extract structured technical skills from this project.
+Return JSON: { "skills": { "languages": string[], "frameworks": string[], "cloud": string[], "concepts": string[] }, "bullets": string[] (resume-ready skill lines), "markdown": string }
+- Only include skills evidenced in the analysis. Group into the four buckets.
+- "bullets" = 3-5 lines suitable for a Skills or Technologies section.
+- "markdown" = formatted skills report with all buckets and bullets.`,
+  },
+  impact_score: {
+    system:
+      "You are a hiring manager who evaluates student and early-career projects for internship readiness.",
+    instructions: `Score this project's impact and readiness.
+Return JSON: { "scores": { "complexity": number, "technicalDepth": number, "leadership": number, "innovation": number, "impact": number, "overall": number, "verdict": string }, "markdown": string }
+- Each score 0-100. "verdict" = 1-2 sentences e.g. "Strong enough for software engineering internship applications."
+- "markdown" = score breakdown table + verdict + explanation for each dimension.`,
+  },
+  interview_questions: {
+    system:
+      "You are an interview coach preparing candidates for behavioral and technical interviews about a specific project.",
+    instructions: `Generate interview questions and prep for this project.
+Return JSON: { "questions": [{ "category": "behavioral"|"technical"|"follow-up", "question": string, "suggestedAnswer": string }], "markdown": string }
+- 8-12 questions: mix behavioral ("Tell me about this project"), technical (stack choices, tradeoffs), and follow-ups.
+- "suggestedAnswer" = concise 3-5 sentence answer grounded in the analysis.
+- "markdown" = all Q&A grouped by category.`,
+  },
+  recruiter_review: {
+    system:
+      "You are a skeptical but fair technical recruiter reviewing a project for a 10-second skim.",
+    instructions: `Give a recruiter's honest review of this project.
+Return JSON: { "review": { "strengths": string[], "weaknesses": string[], "missingMetrics": string[], "suggestions": string[] }, "markdown": string }
+- 3-5 items per array. Be direct. "missingMetrics" = impact numbers that would strengthen the story.
+- "markdown" = full recruiter review report.`,
+  },
+  achievement_quantifier: {
+    system:
+      "You are a résumé expert who transforms vague project descriptions into quantified, impact-driven achievements.",
+    instructions: `Quantify and strengthen achievement statements.
+Return JSON: { "beforeAfter": [{ "before": string, "after": string }], "suggestedMetrics": [{ "metric": string, "confidence": "high"|"medium"|"estimated", "needsConfirmation": boolean }], "bullets": string[] (final quantified bullets), "markdown": string }
+- "beforeAfter" = 3-5 pairs showing weak → strong rewrites.
+- "suggestedMetrics" = metrics to confirm with the user; mark estimated ones clearly.
+- "bullets" = 4-6 final résumé-ready bullets.
+- Never present estimated numbers as facts in bullets — use qualitative impact or mark [confirm: X].`,
+  },
+  hackathon_submission: {
+    system:
+      "You are a hackathon coach who writes compelling Devpost-style submission narratives.",
+    instructions: `Write a hackathon / Devpost submission.
+Return JSON: { "sections": [{ "heading": string, "body": string }], "markdown": string }
+- Sections: Problem Statement, Solution, Technical Implementation, Challenges, Accomplishments, Future Work.
+- Energetic but credible tone. Ground in the analysis.
+- "markdown" = full submission ready to paste into Devpost.`,
+  },
+  college_activity: {
+    system:
+      "You are a college admissions advisor helping students translate technical projects into application materials.",
+    instructions: `Produce college application content from this project.
+Return JSON: { "sections": [{ "heading": string, "body": string }], "responses": [{ "prompt": string, "answer": string }], "markdown": string }
+- Include: Common App Activity (150 char title + description), UC Activity description, and 1-2 supplementary short answers.
+- Accessible language for admissions officers.
+- "markdown" = all sections formatted for copy-paste.`,
+  },
+  project_timeline: {
+    system:
+      "You are a project manager documenting the lifecycle of a technical project for presentations and engineering notebooks.",
+    instructions: `Generate a project timeline.
+Return JSON: { "timeline": [{ "phase": string, "description": string }], "markdown": string }
+- Phases: Ideation, Planning, Development, Testing, Deployment (add others if evident).
+- 2-4 sentences per phase grounded in the analysis timeline and features.
+- "markdown" = vertical timeline in Markdown with phase headings.`,
+  },
 };
 
 export function getGenerationSpec(type: GenerationType): PromptSpec {

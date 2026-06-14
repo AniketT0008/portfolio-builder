@@ -18,6 +18,14 @@ const GENERATION_TYPES = [
   "cover_letter",
   "scholarship_app",
   "architecture_overview",
+  "skills_extraction",
+  "impact_score",
+  "interview_questions",
+  "recruiter_review",
+  "achievement_quantifier",
+  "hackathon_submission",
+  "college_activity",
+  "project_timeline",
 ] as const satisfies readonly GenerationType[];
 
 export const generationSettingsSchema = z.object({
@@ -115,4 +123,15 @@ export const codeStudioPublishSchema = z.object({
     .regex(/^[a-zA-Z0-9._-]+$/, "Invalid repository name"),
   private: z.boolean().optional().default(false),
   create_project: z.boolean().optional().default(true),
+});
+
+export const gapAnalysisRequestSchema = z.object({
+  resume_text: z.string().min(50, "Paste your resume (at least 50 characters)"),
+  job_posting_text: z
+    .string()
+    .min(50, "Paste the job posting (at least 50 characters)"),
+});
+
+export const multiResumeRequestSchema = z.object({
+  project_ids: z.array(z.string().uuid()).min(1, "Select at least one project"),
 });

@@ -76,6 +76,11 @@ export async function runGeneration(
     "tech_docs",
     "portfolio_page",
     "architecture_overview",
+    "impact_score",
+    "interview_questions",
+    "hackathon_submission",
+    "college_activity",
+    "achievement_quantifier",
   ];
   const model = heavyTypes.includes(type) ? MODELS.heavy : MODELS.default;
 

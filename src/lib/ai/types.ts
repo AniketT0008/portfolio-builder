@@ -66,6 +66,47 @@ export const qaSchema = z.object({
   answer: z.string(),
 });
 
+export const skillsBucketSchema = z.object({
+  languages: z.array(z.string()).default([]),
+  frameworks: z.array(z.string()).default([]),
+  cloud: z.array(z.string()).default([]),
+  concepts: z.array(z.string()).default([]),
+});
+
+export const impactScoresSchema = z.object({
+  complexity: z.number(),
+  technicalDepth: z.number(),
+  leadership: z.number(),
+  innovation: z.number(),
+  impact: z.number(),
+  overall: z.number(),
+  verdict: z.string(),
+});
+
+export const interviewQuestionSchema = z.object({
+  category: z.string(),
+  question: z.string(),
+  suggestedAnswer: z.string().optional(),
+});
+
+export const recruiterReviewSchema = z.object({
+  strengths: z.array(z.string()),
+  weaknesses: z.array(z.string()),
+  missingMetrics: z.array(z.string()),
+  suggestions: z.array(z.string()),
+});
+
+export const timelinePhaseSchema = z.object({
+  phase: z.string(),
+  description: z.string(),
+});
+
+export const suggestedMetricSchema = z.object({
+  metric: z.string(),
+  confidence: z.string(),
+  needsConfirmation: z.boolean().default(true),
+});
+
 /** Loose, superset content schema. Generators fill in what's relevant. */
 export const generationContentSchema = z.object({
   markdown: z.string().default(""),
@@ -80,6 +121,15 @@ export const generationContentSchema = z.object({
   paragraphs: z.array(z.string()).optional(),
   responses: z.array(qaSchema).optional(),
   mermaid: z.string().optional(),
+  skills: skillsBucketSchema.optional(),
+  scores: impactScoresSchema.optional(),
+  questions: z.array(interviewQuestionSchema).optional(),
+  review: recruiterReviewSchema.optional(),
+  timeline: z.array(timelinePhaseSchema).optional(),
+  suggestedMetrics: z.array(suggestedMetricSchema).optional(),
+  beforeAfter: z
+    .array(z.object({ before: z.string(), after: z.string() }))
+    .optional(),
 });
 
 export type GenerationContent = z.infer<typeof generationContentSchema>;
