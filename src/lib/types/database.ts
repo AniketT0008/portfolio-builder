@@ -16,6 +16,19 @@ export type Json =
 
 export type ProjectStatus = "draft" | "analyzing" | "ready" | "error";
 
+export type ProjectSource =
+  | "manual"
+  | "github_import"
+  | "linkedin_import"
+  | "custom";
+
+export type CodeStudioStatus =
+  | "uploaded"
+  | "analyzing"
+  | "refactored"
+  | "published"
+  | "error";
+
 export type ArtifactType =
   | "github_repo"
   | "zip"
@@ -46,6 +59,8 @@ export interface Database {
           id: string;
           full_name: string | null;
           avatar_url: string | null;
+          github_username: string | null;
+          linkedin_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -53,6 +68,8 @@ export interface Database {
           id: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          github_username?: string | null;
+          linkedin_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -60,6 +77,8 @@ export interface Database {
           id?: string;
           full_name?: string | null;
           avatar_url?: string | null;
+          github_username?: string | null;
+          linkedin_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -72,6 +91,8 @@ export interface Database {
           name: string;
           description: string | null;
           status: ProjectStatus;
+          source: ProjectSource;
+          source_url: string | null;
           extracted_data: Json | null;
           created_at: string;
           updated_at: string;
@@ -82,6 +103,8 @@ export interface Database {
           name: string;
           description?: string | null;
           status?: ProjectStatus;
+          source?: ProjectSource;
+          source_url?: string | null;
           extracted_data?: Json | null;
           created_at?: string;
           updated_at?: string;
@@ -92,6 +115,8 @@ export interface Database {
           name?: string;
           description?: string | null;
           status?: ProjectStatus;
+          source?: ProjectSource;
+          source_url?: string | null;
           extracted_data?: Json | null;
           created_at?: string;
           updated_at?: string;
@@ -176,6 +201,57 @@ export interface Database {
         };
         Relationships: [];
       };
+      code_studio_sessions: {
+        Row: {
+          id: string;
+          user_id: string;
+          project_id: string | null;
+          name: string;
+          status: CodeStudioStatus;
+          source_files: Json;
+          refactored_files: Json | null;
+          readme_content: string | null;
+          linkedin_post: string | null;
+          github_repo_url: string | null;
+          github_push_result: Json | null;
+          metadata: Json | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          project_id?: string | null;
+          name?: string;
+          status?: CodeStudioStatus;
+          source_files?: Json;
+          refactored_files?: Json | null;
+          readme_content?: string | null;
+          linkedin_post?: string | null;
+          github_repo_url?: string | null;
+          github_push_result?: Json | null;
+          metadata?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string;
+          project_id?: string | null;
+          name?: string;
+          status?: CodeStudioStatus;
+          source_files?: Json;
+          refactored_files?: Json | null;
+          readme_content?: string | null;
+          linkedin_post?: string | null;
+          github_repo_url?: string | null;
+          github_push_result?: Json | null;
+          metadata?: Json | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Relationships: [];
+      };
     };
     Views: Record<string, never>;
     Functions: Record<string, never>;
@@ -189,6 +265,8 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"];
 export type Project = Database["public"]["Tables"]["projects"]["Row"];
 export type Artifact = Database["public"]["Tables"]["artifacts"]["Row"];
 export type Generation = Database["public"]["Tables"]["generations"]["Row"];
+export type CodeStudioSession =
+  Database["public"]["Tables"]["code_studio_sessions"]["Row"];
 
 export type ProjectInsert = Database["public"]["Tables"]["projects"]["Insert"];
 export type ArtifactInsert =

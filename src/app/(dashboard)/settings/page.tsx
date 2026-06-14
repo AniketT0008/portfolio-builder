@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { LogOut } from "lucide-react";
 
+import { IntegrationsForm } from "@/components/settings/integrations-form";
 import { ProfileForm } from "@/components/settings/profile-form";
 import { Button } from "@/components/ui/button";
 import {
@@ -31,6 +32,12 @@ export default async function SettingsPage() {
         email={user.email ?? ""}
         initialName={profile?.full_name ?? ""}
         avatarUrl={profile?.avatar_url ?? null}
+      />
+
+      <IntegrationsForm
+        userId={user.id}
+        initialGithubUsername={profile?.github_username}
+        initialLinkedinUrl={profile?.linkedin_url}
       />
 
       <Card>

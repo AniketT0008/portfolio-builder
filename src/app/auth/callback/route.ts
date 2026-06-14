@@ -25,6 +25,22 @@ export async function GET(request: Request) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (!error) {
+      const supabase = createClient();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (user) {
+        const ghUser =
+          user.user_metadata?.user_name ??
+          user.user_metadata?.preferred_username;
+        if (typeof ghUser === "string" && ghUser.trim()) {
+          await supabase
+            .from("profiles")
+            .update({ github_username: ghUser.trim() })
+            .eq("id", user.id);
+        }
+      }
+
       const forwardedHost = request.headers.get("x-forwarded-host");
       const isLocal = process.env.NODE_ENV === "development";
       if (isLocal) {

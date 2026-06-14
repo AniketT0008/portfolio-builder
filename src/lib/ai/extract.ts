@@ -150,13 +150,24 @@ async function describeArtifact(
 ): Promise<string> {
   const meta = artifact.metadata as Record<string, unknown> | null;
   const note = meta?.note ? `\nUser note: ${meta.note}` : "";
+  const pasted =
+    typeof meta?.pasted === "string"
+      ? meta.pasted
+      : typeof meta?.notes === "string"
+        ? meta.notes
+        : null;
   const header = `### Artifact: ${artifact.original_filename ?? artifact.type} (${artifact.type})${note}`;
 
   if (artifact.type === "github_repo" && artifact.github_url) {
     return `${header}\n${await fetchGitHubContext(artifact.github_url)}`;
   }
 
-  if (!artifact.file_path) return header;
+  if (!artifact.file_path) {
+    if (pasted) {
+      return `${header}\n--- Imported notes ---\n${clamp(pasted)}`;
+    }
+    return header;
+  }
 
   // Download from Storage (RLS-scoped to the calling user).
   const { data, error } = await supabase.storage

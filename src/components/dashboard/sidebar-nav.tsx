@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Download,
   FolderKanban,
   LayoutDashboard,
   Plus,
   Settings,
   Sparkles,
   Star,
+  Wand2,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -16,6 +18,8 @@ import { cn } from "@/lib/utils";
 
 const NAV = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/import", label: "Import Hub", icon: Download },
+  { href: "/code-studio", label: "Code Studio", icon: Wand2 },
   { href: "/projects", label: "Projects", icon: FolderKanban },
   { href: "/library", label: "Library", icon: Star },
   { href: "/settings", label: "Settings", icon: Settings },
@@ -62,8 +66,8 @@ export function SidebarNav() {
           Pro tip
         </div>
         <p className="mt-1.5 text-xs text-muted-foreground">
-          Link a GitHub repo for the richest analysis — we read the README,
-          languages and structure automatically.
+          Use Import Hub to pull GitHub repos, or Code Studio to upload code and
+          push a polished repo automatically.
         </p>
       </div>
     </div>
