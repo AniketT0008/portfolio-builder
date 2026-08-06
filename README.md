@@ -1,11 +1,19 @@
-# ProjectPortfolio
+# ProjectForge AI
 
 **Turn raw project artifacts into polished, professional outputs with AI.**
+
+Live app: [portfolio-builder-fawn.vercel.app](https://portfolio-builder-fawn.vercel.app)
 
 ProjectForge AI lets students, engineers, hackathon teams, robotics teams and
 makers upload their raw project artifacts — GitHub repos, ZIPs, images, PDFs,
 videos, CAD files and docs — and uses AI to automatically generate
 career-ready, portfolio-ready content.
+
+## Demo
+
+![ProjectForge AI demo](demos/projectforge-demo.gif)
+
+Full-quality recording: [`demos/projectforge-demo.mp4`](demos/projectforge-demo.mp4)
 
 ## What it generates
 

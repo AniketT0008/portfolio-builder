@@ -37,6 +37,9 @@ dev-server.log
 # vercel
 .vercel
 
+# local demo capture tooling (recorded assets live in /demos)
+/demo-capture/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
