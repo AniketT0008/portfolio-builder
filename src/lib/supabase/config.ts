@@ -6,6 +6,7 @@
 import {
   cleanEnvValue,
   isValidSupabaseAnonKey,
+  normalizeSiteUrl,
   normalizeSupabaseUrl,
   sanitizeSupabaseAnonKey,
 } from "@/lib/supabase/env-shared";
@@ -48,7 +49,7 @@ export function getRawSupabaseAnonKey(): string | undefined {
 }
 
 export function getSiteUrl(): string | undefined {
-  return readPublicEnv("NEXT_PUBLIC_SITE_URL");
+  return normalizeSiteUrl(readPublicEnv("NEXT_PUBLIC_SITE_URL"));
 }
 
 export function isSupabaseConfigured(): boolean {

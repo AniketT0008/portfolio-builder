@@ -74,32 +74,69 @@ GITHUB_TOKEN=
 
 ### 4. Set up the database
 
-Run the SQL migration against your Supabase project. Either paste
-`supabase/migrations/0001_init.sql` into the Supabase **SQL Editor** and run it,
-or use the Supabase CLI:
+Run **all** SQL migrations against your Supabase project (in order), either by
+pasting each file into the Supabase **SQL Editor**, or via the CLI:
 
 ```bash
+# supabase/migrations/0001_init.sql
+# supabase/migrations/0002_security_fixes.sql
+# supabase/migrations/0003_import_and_code_studio.sql
+# supabase/migrations/0004_premium_generations.sql
 supabase db push        # if you've linked the project
-# or
-psql "$DATABASE_URL" -f supabase/migrations/0001_init.sql
 ```
 
-This creates the `profiles`, `projects`, `artifacts` and `generations` tables,
-enables **Row Level Security** with per-user policies, adds triggers
-(`updated_at`, auto profile creation on sign-up), and provisions a private
-**`artifacts`** Storage bucket with owner-scoped access policies.
+This creates `profiles`, `projects`, `artifacts`, `generations`, and related
+tables, enables **Row Level Security**, adds the auto-profile trigger on
+sign-up, and provisions the private **`artifacts`** Storage bucket.
 
-### 5. Configure Auth
+### 5. Configure Auth (required for login)
 
-In the Supabase dashboard:
+#### A. Supabase → Authentication → URL Configuration
 
-1. **Authentication → Providers → Email** — enable it. (Disable "Confirm email"
-   for the fastest local testing, or keep it on; the app handles both.)
-2. **Authentication → Providers → GitHub** — enable and add your GitHub OAuth
-   app's Client ID/Secret. Set the GitHub OAuth callback to
-   `https://<your-ref>.supabase.co/auth/v1/callback`.
-3. **Authentication → URL Configuration** — add `http://localhost:3000/**` (and
-   your production URL) to the redirect allow-list.
+| Setting | Value |
+| --- | --- |
+| **Site URL** | `https://portfolio-builder-fawn.vercel.app` (prod) or `http://localhost:3000` (local) |
+| **Redirect URLs** | `https://portfolio-builder-fawn.vercel.app/**` |
+| | `https://portfolio-builder-fawn.vercel.app/auth/callback` |
+| | `http://localhost:3000/**` |
+| | `http://localhost:3000/auth/callback` |
+
+#### B. Email provider
+
+**Authentication → Providers → Email** — enable it. For fastest testing you can
+disable **Confirm email**; the app handles both confirmed and unconfirmed flows.
+
+#### C. GitHub OAuth (Continue with GitHub)
+
+1. Create a GitHub OAuth App: https://github.com/settings/developers →
+   **OAuth Apps** → **New OAuth App**
+   - **Homepage URL:** `https://portfolio-builder-fawn.vercel.app`
+   - **Authorization callback URL (must be the Supabase callback, not the app):**
+     `https://<your-project-ref>.supabase.co/auth/v1/callback`
+2. Copy the Client ID + generate a Client Secret.
+3. In Supabase → **Authentication → Providers → GitHub** — enable, paste
+   Client ID / Secret, save.
+
+#### D. Vercel environment variables
+
+In **Vercel → portfolio-builder → Settings → Environment Variables**, set for
+**Production** and **Preview**:
+
+| Name | Example |
+| --- | --- |
+| `NEXT_PUBLIC_SUPABASE_URL` | `https://<ref>.supabase.co` |
+| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | `eyJ...` (anon/public) |
+| `SUPABASE_SERVICE_ROLE_KEY` | service_role (server only) |
+| `GEMINI_MODEL` | your Gemini API key |
+| `NEXT_PUBLIC_SITE_URL` | `https://portfolio-builder-fawn.vercel.app` |
+
+After changing env vars, **redeploy**. Verify
+[`/api/health`](https://portfolio-builder-fawn.vercel.app/api/health) shows
+`supabaseReachable: true` (not just `supabase: true`).
+
+> **If login still fails:** a paused/deleted Supabase project leaves env vars
+> looking valid while DNS returns NXDOMAIN. Create a **new** Supabase project,
+> re-run migrations, update the three Supabase env vars, and redeploy.
 
 ### 6. Run
 
@@ -162,11 +199,25 @@ supabase/migrations/0001_init.sql
 
 ## Deployment (Vercel)
 
-1. Push this repo to GitHub and import it into Vercel.
-2. Add the same environment variables in **Project Settings → Environment
-   Variables**. Set `NEXT_PUBLIC_SITE_URL` to your production domain.
-3. Add your production URL to the Supabase Auth redirect allow-list.
-4. Deploy. The AI routes are configured with `maxDuration = 60`.
+1. Push this repo to GitHub and import it into Vercel (project name can differ
+   from the `*.vercel.app` subdomain).
+2. Add the environment variables above in **Project Settings → Environment
+   Variables** for Production + Preview. Set `NEXT_PUBLIC_SITE_URL` to your
+   production domain (no trailing slash).
+3. Add your production URL to the Supabase Auth redirect allow-list (see §5).
+4. Deploy. Confirm `/api/health` reports `status: "ok"` and
+   `supabaseReachable: true`.
+5. The AI routes are configured with `maxDuration = 60`.
+
+## Troubleshooting login
+
+| Symptom | Likely cause | Fix |
+| --- | --- | --- |
+| Login form says **Database unreachable** | Supabase project paused/deleted | New project + update Vercel env + migrations |
+| **Supabase isn't connected** banner | Missing `NEXT_PUBLIC_SUPABASE_*` on Vercel | Add env vars and redeploy |
+| GitHub button errors / unsupported provider | GitHub provider off or bad OAuth app | Enable provider; callback must be `https://<ref>.supabase.co/auth/v1/callback` |
+| Redirect / PKCE errors after GitHub | Redirect URL not allow-listed | Add `https://your-domain/**` and `/auth/callback` in Supabase URL config |
+| Email signup works but dashboard empty / RLS errors | Migrations not applied | Run `0001`–`0004` in SQL Editor |
 
 ## Security notes
 

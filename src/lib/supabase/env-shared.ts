@@ -12,6 +12,21 @@ export function cleanEnvValue(value: string | undefined): string | undefined {
   return v || undefined;
 }
 
+/** Strip trailing slashes so OAuth redirect URLs stay consistent. */
+export function normalizeSiteUrl(
+  raw: string | undefined,
+): string | undefined {
+  const v = cleanEnvValue(raw);
+  if (!v) return undefined;
+  try {
+    const url = new URL(v);
+    if (url.protocol !== "http:" && url.protocol !== "https:") return undefined;
+    return url.origin + url.pathname.replace(/\/+$/, "");
+  } catch {
+    return undefined;
+  }
+}
+
 /** Accept full URL, host-only, or bare project ref. */
 export function normalizeSupabaseUrl(
   raw: string | undefined,
@@ -30,8 +45,16 @@ export function normalizeSupabaseUrl(
     }
   }
 
-  if (!/^https?:\/\//i.test(url)) return undefined;
-  return url;
+  try {
+    const parsed = new URL(url);
+    if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+      return undefined;
+    }
+    // Canonical project URL — no trailing slash / path noise.
+    return parsed.origin;
+  } catch {
+    return undefined;
+  }
 }
 
 /** Reject the common mistake of pasting the project URL as the anon key. */

@@ -19,6 +19,45 @@ import {
 
 type Mode = "login" | "signup";
 
+type HealthPayload = {
+  status?: string;
+  supabase?: boolean;
+  supabaseReachable?: boolean;
+  checks?: {
+    supabaseUrlHost?: string | null;
+    supabaseReachabilityError?: string | null;
+    anonKeyMisconfigured?: boolean;
+  };
+};
+
+function friendlyAuthError(err: unknown): string {
+  const message =
+    err instanceof Error ? err.message : typeof err === "string" ? err : "";
+  const lower = message.toLowerCase();
+
+  if (
+    lower.includes("failed to fetch") ||
+    lower.includes("networkerror") ||
+    lower.includes("load failed") ||
+    lower.includes("network request failed")
+  ) {
+    return "Cannot reach your Supabase project. It may be paused or deleted — check Vercel env vars and the Supabase dashboard.";
+  }
+  if (lower.includes("unsupported provider") || lower.includes("provider is not enabled")) {
+    return "GitHub sign-in isn't enabled. In Supabase → Authentication → Providers, enable GitHub and add your OAuth app credentials.";
+  }
+  if (lower.includes("redirect") && lower.includes("not allowed")) {
+    return "Redirect URL not allowed. Add https://portfolio-builder-fawn.vercel.app/** to Supabase → Authentication → URL Configuration.";
+  }
+  if (lower.includes("email not confirmed")) {
+    return "Confirm your email first (check inbox), or disable email confirmations in Supabase Auth settings for testing.";
+  }
+  if (lower.includes("invalid login credentials")) {
+    return "Invalid email or password.";
+  }
+  return message || "Something went wrong.";
+}
+
 export function AuthForm({
   mode,
   initialConfigured = false,
@@ -29,6 +68,9 @@ export function AuthForm({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [configured, setConfigured] = React.useState(initialConfigured);
+  const [reachable, setReachable] = React.useState<boolean | null>(null);
+  const [reachError, setReachError] = React.useState<string | null>(null);
+  const [supabaseHost, setSupabaseHost] = React.useState<string | null>(null);
   const supabase = React.useMemo(
     () => (configured ? createClient() : null),
     [configured],
@@ -39,6 +81,30 @@ export function AuthForm({
     setConfigured(isSupabaseConfigured());
   }, [initialConfigured]);
 
+  // Live connectivity probe — env can look fine while the project DNS is dead.
+  React.useEffect(() => {
+    let cancelled = false;
+    async function probe() {
+      try {
+        const res = await fetch("/api/health", { cache: "no-store" });
+        const data = (await res.json()) as HealthPayload;
+        if (cancelled) return;
+        setReachable(Boolean(data.supabaseReachable));
+        setReachError(data.checks?.supabaseReachabilityError ?? null);
+        setSupabaseHost(data.checks?.supabaseUrlHost ?? null);
+      } catch {
+        if (!cancelled) {
+          setReachable(false);
+          setReachError("health_check_failed");
+        }
+      }
+    }
+    void probe();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const [fullName, setFullName] = React.useState("");
   const [email, setEmail] = React.useState("");
   const [password, setPassword] = React.useState("");
@@ -47,20 +113,31 @@ export function AuthForm({
 
   const redirectedFrom = searchParams.get("redirectedFrom") || "/dashboard";
 
-  // Surface auth errors forwarded via query string (e.g. from the callback).
+  // Surface auth errors forwarded via query string (callback / OAuth provider).
   React.useEffect(() => {
-    const err = searchParams.get("error");
-    if (err) toast.error(decodeURIComponent(err));
+    const err =
+      searchParams.get("error_description") ||
+      searchParams.get("error") ||
+      searchParams.get("message");
+    if (err) toast.error(friendlyAuthError(decodeURIComponent(err)));
   }, [searchParams]);
 
   const siteUrl =
     getSiteUrl() ||
     (typeof window !== "undefined" ? window.location.origin : "");
 
+  const authBlocked =
+    !configured || reachable === false || isAnonKeyMisconfigured();
+  const disabled = authBlocked || loading || oauthLoading;
+
   async function handleEmail(e: React.FormEvent) {
     e.preventDefault();
     if (!supabase) {
       toast.error("Supabase isn't configured yet.");
+      return;
+    }
+    if (reachable === false) {
+      toast.error(friendlyAuthError(new Error("Failed to fetch")));
       return;
     }
     setLoading(true);
@@ -93,9 +170,7 @@ export function AuthForm({
         router.refresh();
       }
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Something went wrong.",
-      );
+      toast.error(friendlyAuthError(err));
     } finally {
       setLoading(false);
     }
@@ -106,6 +181,10 @@ export function AuthForm({
       toast.error("Supabase isn't configured yet.");
       return;
     }
+    if (reachable === false) {
+      toast.error(friendlyAuthError(new Error("Failed to fetch")));
+      return;
+    }
     setOauthLoading(true);
     try {
       const { error } = await supabase.auth.signInWithOAuth({
@@ -114,18 +193,15 @@ export function AuthForm({
           redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
             redirectedFrom,
           )}`,
+          scopes: "read:user user:email",
         },
       });
       if (error) throw error;
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "GitHub sign-in failed.",
-      );
+      toast.error(friendlyAuthError(err));
       setOauthLoading(false);
     }
   }
-
-  const disabled = !configured || loading || oauthLoading;
 
   return (
     <div className="space-y-6">
@@ -172,6 +248,35 @@ export function AuthForm({
               <code className="text-xs">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> in
               Vercel → Settings → Environment Variables, then redeploy. See the
               README for setup.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {configured && reachable === false && (
+        <div className="flex gap-3 rounded-lg border border-red-500/40 bg-red-500/10 p-3 text-sm">
+          <TriangleAlert className="mt-0.5 h-4 w-4 shrink-0 text-red-500" />
+          <div className="space-y-1">
+            <p className="font-medium text-red-600 dark:text-red-400">
+              Database unreachable
+            </p>
+            <p className="text-muted-foreground">
+              Env vars are set
+              {supabaseHost ? (
+                <>
+                  {" "}
+                  (<code className="text-xs">{supabaseHost}</code>)
+                </>
+              ) : null}
+              , but the Supabase project does not respond
+              {reachError ? (
+                <>
+                  {" "}
+                  (<code className="text-xs">{reachError}</code>)
+                </>
+              ) : null}
+              . It was likely paused or deleted. Create a new Supabase project,
+              run the SQL migrations, update Vercel env vars, and redeploy.
             </p>
           </div>
         </div>

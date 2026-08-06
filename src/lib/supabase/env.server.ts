@@ -5,6 +5,7 @@
 
 import {
   cleanEnvValue,
+  normalizeSiteUrl,
   normalizeSupabaseUrl,
   sanitizeSupabaseAnonKey,
   isValidSupabaseAnonKey,
@@ -41,7 +42,53 @@ export function getServerSupabaseAnonKey(): string | undefined {
 }
 
 export function getServerSiteUrl(): string | undefined {
-  return firstEnv("NEXT_PUBLIC_SITE_URL", "SITE_URL");
+  return normalizeSiteUrl(firstEnv("NEXT_PUBLIC_SITE_URL", "SITE_URL"));
+}
+
+export type SupabaseReachability = {
+  reachable: boolean;
+  status: number | null;
+  error: string | null;
+};
+
+/**
+ * Live probe against the configured Supabase project. Env vars can look valid
+ * while the project is paused/deleted (DNS NXDOMAIN) — this catches that.
+ */
+export async function probeSupabaseReachability(
+  timeoutMs = 5000,
+): Promise<SupabaseReachability> {
+  const url = getServerSupabaseUrl();
+  const anon = getServerSupabaseAnonKey();
+  if (!url || !anon) {
+    return { reachable: false, status: null, error: "missing_env" };
+  }
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const res = await fetch(`${url}/auth/v1/health`, {
+      method: "GET",
+      headers: { apikey: anon, Authorization: `Bearer ${anon}` },
+      signal: controller.signal,
+      cache: "no-store",
+    });
+    return {
+      reachable: res.ok,
+      status: res.status,
+      error: res.ok ? null : `http_${res.status}`,
+    };
+  } catch (err) {
+    const message =
+      err instanceof Error
+        ? err.name === "AbortError"
+          ? "timeout"
+          : err.message
+        : "network_error";
+    return { reachable: false, status: null, error: message };
+  } finally {
+    clearTimeout(timer);
+  }
 }
 
 export function getServerGeminiKey(): string | undefined {
@@ -83,6 +130,7 @@ export function getServerEnvDiagnostics() {
     supabaseUrlHost: url ? safeHost(url) : null,
     hasGeminiKey: isServerAIConfigured(),
     hasSiteUrl: Boolean(getServerSiteUrl()),
+    siteUrl: getServerSiteUrl() ?? null,
     anonKeyMisconfigured: isServerAnonKeyMisconfigured(),
     debug: {
       supabaseUrlEnvPresent: Boolean(rawUrl),
