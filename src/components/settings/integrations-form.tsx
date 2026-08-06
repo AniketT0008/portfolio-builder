@@ -17,7 +17,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { createClient } from "@/lib/supabase/client";
-import { getSiteUrl } from "@/lib/supabase/config";
 
 export function IntegrationsForm({
   userId,
@@ -58,26 +57,13 @@ export function IntegrationsForm({
     router.refresh();
   }
 
-  async function connectGitHub() {
+  function connectGitHub() {
     setConnecting(true);
-    const siteUrl =
-      getSiteUrl() ||
-      (typeof window !== "undefined" ? window.location.origin : "");
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "github",
-        options: {
-          redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent("/settings")}`,
-          scopes: "read:user repo",
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "GitHub connect failed.",
-      );
-      setConnecting(false);
-    }
+    const params = new URLSearchParams({
+      next: "/settings",
+      scopes: "read:user repo",
+    });
+    window.location.assign(`/auth/github?${params.toString()}`);
   }
 
   return (

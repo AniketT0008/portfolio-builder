@@ -18,15 +18,14 @@ declare global {
 }
 
 function readPublicEnv(name: string): string | undefined {
-  const fromProcess = cleanEnvValue(process.env[name]);
-  if (fromProcess) return fromProcess;
-
+  // Prefer runtime-injected values so cookie storage keys match the server
+  // after Vercel env updates (build-time NEXT_PUBLIC_* can be stale).
   if (typeof window !== "undefined") {
     const fromRuntime = cleanEnvValue(window.__NEXT_PUBLIC_ENV__?.[name]);
     if (fromRuntime) return fromRuntime;
   }
 
-  return undefined;
+  return cleanEnvValue(process.env[name]);
 }
 
 export function getSupabaseUrl(): string | undefined {

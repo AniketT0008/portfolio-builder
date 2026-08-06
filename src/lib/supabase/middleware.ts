@@ -14,8 +14,14 @@ type CookieToSet = { name: string; value: string; options: CookieOptions };
 const PUBLIC_ROUTES = ["/", "/login", "/signup", "/auth", "/api/health"];
 const AUTH_ROUTES = ["/login", "/signup"];
 
-/** Never call Supabase auth in middleware for these — keeps the landing page up. */
-const MIDDLEWARE_PASSTHROUGH = ["/", "/api/health"];
+/** Never call Supabase auth in middleware for these — keeps the landing page up
+ *  and avoids touching PKCE cookies during the OAuth hop. */
+const MIDDLEWARE_PASSTHROUGH = [
+  "/",
+  "/api/health",
+  "/auth/callback",
+  "/auth/github",
+];
 
 function isPublic(pathname: string) {
   return PUBLIC_ROUTES.some(

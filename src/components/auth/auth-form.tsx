@@ -46,6 +46,9 @@ function friendlyAuthError(err: unknown): string {
   if (lower.includes("unsupported provider") || lower.includes("provider is not enabled")) {
     return "GitHub sign-in isn't enabled. In Supabase → Authentication → Providers, enable GitHub and add your OAuth app credentials.";
   }
+  if (lower.includes("pkce") || lower.includes("code verifier")) {
+    return "GitHub sign-in lost its login cookie mid-redirect. Try again, or use email sign-in. If it keeps failing, confirm the GitHub provider is enabled in Supabase.";
+  }
   if (lower.includes("redirect") && lower.includes("not allowed")) {
     return "Redirect URL not allowed. Add https://portfolio-builder-fawn.vercel.app/** to Supabase → Authentication → URL Configuration.";
   }
@@ -176,8 +179,8 @@ export function AuthForm({
     }
   }
 
-  async function handleGitHub() {
-    if (!supabase) {
+  function handleGitHub() {
+    if (!configured) {
       toast.error("Supabase isn't configured yet.");
       return;
     }
@@ -186,21 +189,12 @@ export function AuthForm({
       return;
     }
     setOauthLoading(true);
-    try {
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "github",
-        options: {
-          redirectTo: `${siteUrl}/auth/callback?next=${encodeURIComponent(
-            redirectedFrom,
-          )}`,
-          scopes: "read:user user:email",
-        },
-      });
-      if (error) throw error;
-    } catch (err) {
-      toast.error(friendlyAuthError(err));
-      setOauthLoading(false);
-    }
+    // Server route sets the PKCE verifier cookie on the redirect response.
+    const params = new URLSearchParams({
+      next: redirectedFrom,
+      scopes: "read:user user:email",
+    });
+    window.location.assign(`/auth/github?${params.toString()}`);
   }
 
   return (
