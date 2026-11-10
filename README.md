@@ -2,6 +2,8 @@
 
 **Turn raw project artifacts into polished, professional outputs with AI.**
 
+**Hackathon-built project.**
+
 Live app: [portfolio-builder-fawn.vercel.app](https://portfolio-builder-fawn.vercel.app)
 
 ProjectForge AI lets students, engineers, hackathon teams, robotics teams and
